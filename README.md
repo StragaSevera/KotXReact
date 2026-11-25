@@ -15,6 +15,45 @@ implementation("ru.ought.kotx:kotx-react:0.0.1")
 
 For standalone library builds, KotXReact includes the sibling `KotX` checkout when present. Apps that use KotX state APIs also declare `ru.ought.kotx:core` as a direct dependency. See the [React To-Do example](../Examples/ReactToDo/README.md) for the full setup.
 
+## Use GitHub sources
+
+Add the GitHub repositories to your application's `settings.gradle.kts` with the [Git Include settings plugin](https://melix.github.io/includegit-gradle-plugin/latest/index.html). The plugin fetches both sources when Gradle configures the build.
+
+```kotlin
+import me.champeau.gradle.igp.gitRepositories
+
+plugins {
+    id("me.champeau.includegit") version "0.3.2"
+}
+
+gitRepositories {
+    checkoutsDirectory.set(file(".gradle/kotx-sources"))
+    include("kotx-core") {
+        uri.set("https://github.com/StragaSevera/KotX.git")
+        tag.set("v0.0.1")
+    }
+    include("kotx-react") {
+        uri.set("https://github.com/StragaSevera/kotx-react.git")
+        tag.set("v0.0.1")
+    }
+}
+```
+
+Both repositories are pinned to their `v0.0.1` release tags. The plugin registers them as included builds so Gradle can resolve KotX core for KotXReact and the Kotlin/JS npm tasks.
+
+In your application's `build.gradle.kts`, add KotXReact to the `jsMain` dependencies. Keep the direct core dependency if your app uses KotX state APIs.
+
+```kotlin
+kotlin {
+    sourceSets.jsMain.dependencies {
+        implementation("ru.ought.kotx:kotx-react:0.0.1")
+        implementation("ru.ought.kotx:core:0.0.1") // For apps that use KotX state APIs.
+    }
+}
+```
+
+## Observe KotX state
+
 Define components that render KotX state with `ru.ought.kotx.react.ObservingFC`. Read KotX state as ordinary Kotlin properties anywhere in the render body.
 
 ```kotlin
