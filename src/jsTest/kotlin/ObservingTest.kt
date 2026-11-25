@@ -4,6 +4,7 @@ import de.infix.testBalloon.framework.core.testSuite
 import io.kotest.matchers.shouldBe
 import kotlin.js.Promise
 import react.FC
+import react.Props
 import react.StrictMode
 import react.Suspense
 import react.create
@@ -13,11 +14,31 @@ import ru.ought.kotx.reaction.InvalidationListener
 import ru.ought.kotx.tracking.SubscriptionSource
 
 @Suppress("unused")
-val UseObservedTests by testSuite {
+val ObservingTests by testSuite {
+    test("ObservingFC forwards props and rerenders when a source read in its body changes") {
+        val source = TestSource("first")
+        val Reader = ObservingFC<ReaderProps>("Reader") { props ->
+            span { +"${props.prefix}${source.value}" }
+        }
+
+        MountedRoot().use { view ->
+            flushSync { view.root.render(Reader.create { prefix = "Value: " }) }
+            view.host.textContent.shouldBe("Value: first")
+            flushSync { source.value = "second" }
+            view.host.textContent.shouldBe("Value: second")
+        }
+    }
+
+    test("ObservingFC sets the component display name") {
+        val Reader = ObservingFC("Reader") { -> span { +"Reader" } }
+
+        Reader.displayName.shouldBe("Reader")
+    }
+
     test("writes to a read source update the committed component") {
         val source = TestSource(1)
         val Reader = FC {
-            val value = useObserved { source.value }
+            val value = observing { source.value }
             span { +value.toString() }
         }
 
@@ -33,7 +54,7 @@ val UseObservedTests by testSuite {
         val left = TestSource("left")
         val right = TestSource("right")
         val Reader = FC {
-            val text = useObserved { if (chooseLeft.value) left.value else right.value }
+            val text = observing { if (chooseLeft.value) left.value else right.value }
             span { +text }
         }
 
@@ -51,7 +72,7 @@ val UseObservedTests by testSuite {
 
     test("unmount releases subscriptions after Strict Mode replays setup") {
         val source = TestSource(1)
-        val Reader = FC { useObserved { source.value } }
+        val Reader = FC { observing { source.value } }
 
         MountedRoot().use { view ->
             flushSync { view.root.render(StrictMode.create { Reader() }) }
@@ -65,7 +86,7 @@ val UseObservedTests by testSuite {
         val source = TestSource(1)
         val pending = Promise<Unit> { _, _ -> }
         val Reader = FC {
-            useObserved { source.value }
+            observing { source.value }
             suspendRender(pending)
         }
 
@@ -88,7 +109,7 @@ val UseObservedTests by testSuite {
     test("a write after render and before subscription reaches the component") {
         val source = TestSource(1, beforeSubscribe = { value = 2 })
         val Reader = FC {
-            val value = useObserved { source.value }
+            val value = observing { source.value }
             span { +value.toString() }
         }
 
@@ -97,6 +118,10 @@ val UseObservedTests by testSuite {
             view.host.textContent.shouldBe("2")
         }
     }
+}
+
+private external interface ReaderProps : Props {
+    var prefix: String
 }
 
 private class TestSource<T>(

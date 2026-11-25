@@ -15,12 +15,16 @@ implementation("ru.ought.kotx:kotx-react:0.0.1")
 
 For standalone library builds, KotXReact includes the sibling `KotX` checkout when present. Apps that use KotX state APIs also declare `ru.ought.kotx:core` as a direct dependency. See the [React To-Do example](../Examples/ReactToDo/README.md) for the full setup.
 
-Import `ru.ought.kotx.react.useObserved` and call it unconditionally inside a function component. Put synchronous reads of the KotX state that the component needs inside the block.
+Define components that render KotX state with `ru.ought.kotx.react.ObservingFC`. Read KotX state as ordinary Kotlin properties anywhere in the render body.
 
 ```kotlin
-val title = useObserved { store.title }
+val Title = ObservingFC {
+    h1 { +store.title }
+}
 ```
 
-The hook subscribes to the sources read by the last committed render and releases them on unmount. A newly subscribed source triggers a follow-up render to catch writes between render and subscription. Keep the observable sources stable across renders so this follow-up can settle.
+`ObservingFC` accepts typed props and an optional display name, just like `FC`. To add observation to an existing function component, import `ru.ought.kotx.react.observing` and wrap its render body in an unconditional `observing { ... }` call.
+
+The component subscribes to the sources read synchronously by the last committed render and releases them on unmount. A newly subscribed source triggers a follow-up render to catch writes between render and subscription. Keep the observable sources stable across renders so this follow-up can settle.
 
 Run the browser tests with `./gradlew jsBrowserTest`. Chrome is required. Set `CHROME_BIN` if Karma cannot find it.

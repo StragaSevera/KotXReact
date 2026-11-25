@@ -10,7 +10,7 @@ import react.useState
  * unconditionally from the component.
  * When the invalidator subscribes to a new source, it requests a follow-up render to check for missed writes.
  */
-fun <T> useObserved(component: () -> T): T {
+fun <T> observing(component: () -> T): T {
     // React owns the render schedule. An invalidation only advances this component's revision.
     val (_, setRevision) = useState(0)
     val (invalidator) = useState {

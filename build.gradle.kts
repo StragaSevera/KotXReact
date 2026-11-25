@@ -20,7 +20,7 @@ kotlin {
     sourceSets {
         jsMain.dependencies {
             implementation("ru.ought.kotx:core:0.0.1")
-            implementation("org.jetbrains.kotlin-wrappers:kotlin-react:2026.9.0-19.2.8")
+            api("org.jetbrains.kotlin-wrappers:kotlin-react:2026.9.0-19.2.8")
         }
         jsTest.dependencies {
             implementation("de.infix.testBalloon:testBalloon-framework-core:1.1.0")
